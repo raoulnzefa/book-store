@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
+import store from '../store/index.js'
 
 Vue.use(VueRouter)
 
@@ -17,7 +18,45 @@ Vue.use(VueRouter)
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
     component: () => import(/* webpackChunkName: "about" */ '../views/About.vue')
-  }
+  },
+  {
+    path:'/profile',
+    name:'Profiles',
+    component:() => import('../views/Profile.vue'),
+    meta:{auth:true},
+  },
+  {
+    path:'/categories',
+    name:'categories',
+    component:() => import('../views/Categories.vue')
+  },
+  {
+    path:'/books',
+    name:'books',
+    component:() => import('../views/Books.vue')
+  },
+  {
+    path:'/category/:slug',
+    name:'category',
+    component:() => import('../views/Category.vue')
+  },
+  {
+    path:'/book/:slug',
+    name:'book',
+    component:() => import('../views/Book.vue')
+  },
+  {
+    path:'/Checkout',
+    name:'checkout',
+    component:() => import('../views/Shipping.vue'),
+    meta:{auth:true}
+  },
+  {
+    path:'/orders',
+    name:'my_orders',
+    component:()=>import('../views/Orders.vue'),
+    meta:{auth:true},
+  },
 ]
 
 const router = new VueRouter({
@@ -26,4 +65,22 @@ const router = new VueRouter({
   routes
 })
 
+router.beforeEach((to,from,next)=>{
+  if(to.matched.some(record=>record.meta.auth)){
+    if(store.getters['auth/guest']){
+      store.dispatch('alert/set',{
+        status:true,
+        text:'Login first',
+        color:'error',
+      })
+      store.dispatch('setPrevUrl',to.path)
+      store.dispatch('dialog/setComponent','login')
+      store.dispatch('dialog/setStatus',true)
+    }else{
+      next()
+    }
+  }else{
+    next()
+  }
+})
 export default router
